@@ -24,6 +24,7 @@ public class SpuDTO extends BaseDTO {
     private String title;
 
     @ApiModelProperty(value = "子标题")
+    @NotEmpty(message = "子标题不能为空", groups = {MingruiOperation.Add.class})
     private String subTitle;
 
     @ApiModelProperty(value = "1级类目id", example = "1")

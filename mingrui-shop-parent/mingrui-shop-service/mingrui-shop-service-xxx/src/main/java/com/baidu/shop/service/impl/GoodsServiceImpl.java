@@ -209,5 +209,27 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         return this.setResultSuccess();
     }
 
+    //下架，状态改为0
+    @Override
+    public Result<JSONObject> xia(Integer spuId) {
+        SpuEntity spuEntity = spuMapper.selectByPrimaryKey(spuId);
+        if(spuEntity.getSaleable() == 1){
+            spuEntity.setSaleable(0);
+            spuMapper.updateByPrimaryKeySelective(spuEntity);
+        }
+        return this.setResultSuccess();
+    }
+
+    //上架，状态改为1
+    @Override
+    public Result<JSONObject> shang(Integer spuId) {
+        SpuEntity spuEntity = spuMapper.selectByPrimaryKey(spuId);
+        if(spuEntity.getSaleable() == 0){
+            spuEntity.setSaleable(1);
+            spuMapper.updateByPrimaryKeySelective(spuEntity);
+        }
+        return this.setResultSuccess();
+    }
+
 
 }

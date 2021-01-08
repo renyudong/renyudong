@@ -7,8 +7,10 @@ import com.baidu.shop.dto.SpecParamDTO;
 import com.baidu.shop.entity.SpecGroupEntity;
 import com.baidu.shop.entity.SpecParamEntity;
 import com.baidu.shop.utils.JSONUtil;
+import com.baidu.shop.validate.group.MingruiOperation;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,11 +24,11 @@ public interface SpecGroupService {
 
     @PostMapping(value = "specgroup/add")
     @ApiOperation(value = "新增")
-    Result<JSONObject> addSpecGroup(@RequestBody SpecGroupDTO specGroupDTO);
+    Result<JSONObject> addSpecGroup(@Validated(MingruiOperation.Add.class) @RequestBody SpecGroupDTO specGroupDTO);
 
     @PutMapping(value = "specgroup/add")
     @ApiOperation(value = "修改")
-    Result<JSONObject> updateSpecGroup(@RequestBody SpecGroupDTO specGroupDTO);
+    Result<JSONObject> updateSpecGroup(@Validated(MingruiOperation.Update.class) @RequestBody SpecGroupDTO specGroupDTO);
 
     @DeleteMapping(value = "specgroup/delete")
     @ApiOperation(value = "删除")
@@ -40,11 +42,11 @@ public interface SpecGroupService {
 
     @ApiOperation(value = "新增")
     @PostMapping(value = "specparam/add")
-    Result<JSONObject> addSpecParam(@RequestBody SpecParamDTO specParamDTO);
+    Result<JSONObject> addSpecParam(@Validated(MingruiOperation.Add.class) @RequestBody SpecParamDTO specParamDTO);
 
     @ApiOperation(value = "修改")
     @PutMapping(value = "specparam/add")
-    Result<JSONObject> updateSpecParam(@RequestBody SpecParamDTO specParamDTO);
+    Result<JSONObject> updateSpecParam(@Validated(MingruiOperation.Update.class) @RequestBody SpecParamDTO specParamDTO);
 
     @ApiOperation(value = "删除")
     @DeleteMapping(value = "specparam/delete")
