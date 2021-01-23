@@ -86,4 +86,13 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         categoryMapper.insertSelective(categoryEntity);
         return this.setResultSuccess();
     }
+
+    //回显
+    @Override
+    public Result<List<CategoryEntity>> getCategoryByBrandId(Integer brandId) {
+        //查询出商品的分类
+        List<CategoryEntity> list = categoryMapper.getCategoryByBrandId(brandId);
+
+        return this.setResultSuccess(list);
+    }
 }

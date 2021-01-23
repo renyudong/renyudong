@@ -108,4 +108,47 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
 
         return this.setResultSuccess();
     }
+
+    @Transactional
+    @Override
+    public Result<JSONObject> editBrandInfo(BrandDTO brandDTO) {
+        //名字修改，首字母改变
+        BrandEntity brandEntity = BaiduBeanUtil.copyProperties(brandDTO,BrandEntity.class);
+        brandEntity.setLetter(PinyinUtil.getUpperCase(String.valueOf(brandEntity.getName().toCharArray()[0]), false).toCharArray()[0]);
+        brandMapper.updateByPrimaryKeySelective(brandEntity); //修改首字母
+
+        //清空关系表中的数据
+        Example example = new Example(CategoryBrandEntity.class);
+        example.createCriteria().andEqualTo("brandId",brandDTO.getId());
+        categoryBrandMapper.deleteByExample(example);
+
+        String categories = brandDTO.getCategories();//得到分类集合字符串
+        if(StringUtils.isEmpty(brandDTO.getCategories())) {//数据不为空
+            return this.setResultError("");
+        }
+
+        List<CategoryBrandEntity> categoryBrandEntities = new ArrayList<>();//定义list集合
+        //判断分类集合字符串中是否包含,
+        if(categories.contains(",")){//多个分类 --> 批量新增
+            String[] categoryArr = categories.split(",");//根据逗号分割
+
+            for (String s : categoryArr) {//遍历
+                CategoryBrandEntity categoryBrandEntity = new CategoryBrandEntity();//实体类
+                categoryBrandEntity.setBrandId(brandEntity.getId());//获得品牌id
+                categoryBrandEntity.setCategoryId(Integer.valueOf(s));//获得分类的数组
+                categoryBrandEntities.add(categoryBrandEntity);//实体类给集合赋值
+            }
+            //insertListMapper
+            categoryBrandMapper.insertList(categoryBrandEntities);
+        }else{//普通单个新增
+
+            CategoryBrandEntity categoryBrandEntity = new CategoryBrandEntity();
+            categoryBrandEntity.setBrandId(brandEntity.getId());
+            categoryBrandEntity.setCategoryId(Integer.valueOf(categories));
+
+            categoryBrandMapper.insertSelective(categoryBrandEntity);
+        }
+
+        return this.setResultSuccess();
+    }
 }
