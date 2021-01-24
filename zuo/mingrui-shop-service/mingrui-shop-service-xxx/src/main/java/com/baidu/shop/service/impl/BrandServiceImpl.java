@@ -151,4 +151,17 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
 
         return this.setResultSuccess();
     }
+
+    //删除
+    @Transactional
+    @Override
+    public Result<JSONObject> deleteBrandInfo(Integer id) {
+        //删除id
+        brandMapper.deleteByPrimaryKey(id);
+        //删除关系表
+        Example example = new Example(CategoryBrandEntity.class);
+        example.createCriteria().andEqualTo("brandId",id);
+        categoryBrandMapper.deleteByExample(example);//删除商品分类
+        return this.setResultSuccess();
+    }
 }
