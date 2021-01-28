@@ -4,8 +4,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.BaseApiService;
 import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.SpecGroupDTO;
+import com.baidu.shop.dto.SpecParamDTO;
 import com.baidu.shop.entity.SpecGroupEntity;
+import com.baidu.shop.entity.SpecParamEntity;
 import com.baidu.shop.mapper.SpecGroupMapper;
+import com.baidu.shop.mapper.SpecParamMapper;
 import com.baidu.shop.serivce.SpecificationService;
 import com.baidu.shop.utils.BaiduBeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,9 @@ public class SpecificationServiceImpl extends BaseApiService implements Specific
 
     @Autowired
     private SpecGroupMapper specGroupMapper;
+
+    @Autowired
+    private SpecParamMapper specParamMapper;
 
     @Override
     public Result<List<SpecGroupEntity>> getSpecGroup(SpecGroupDTO specGroupDTO) {
@@ -54,5 +60,28 @@ public class SpecificationServiceImpl extends BaseApiService implements Specific
 
         specGroupMapper.deleteByPrimaryKey(id);
         return this.setResultSuccess();
+    }
+
+
+
+
+    @Override
+    public Result<List<SpecParamEntity>> getSpecParam(SpecParamDTO specParamDTO) {
+        SpecParamEntity specParamEntity = BaiduBeanUtil.copyProperties(specParamDTO, SpecParamEntity.class);
+        Example example = new Example(SpecParamEntity.class);
+        Example.Criteria criteria = example.createCriteria();
+
+        if(null != specParamEntity.getGroupId()){
+            criteria.andEqualTo("groupId",specParamEntity.getGroupId());
+        }
+
+        if(null != specParamEntity.getCid()){
+            criteria.andEqualTo("cid",specParamEntity.getCid());
+        }
+
+
+        List<SpecParamEntity> specParamEntities = specParamMapper.selectByExample(example);
+
+        return this.setResultSuccess(specParamEntities);
     }
 }

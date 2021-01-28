@@ -3,7 +3,9 @@ package com.baidu.shop.serivce;
 import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.SpecGroupDTO;
+import com.baidu.shop.dto.SpecParamDTO;
 import com.baidu.shop.entity.SpecGroupEntity;
+import com.baidu.shop.entity.SpecParamEntity;
 import com.baidu.shop.validate.group.MingruiOperation;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,4 +32,8 @@ public interface SpecificationService {
     @DeleteMapping(value = "specgroup/delete")
     @ApiOperation(value = "删除")
     Result<JSONObject> deleteSpecGroup(Integer id);
+
+    @ApiOperation(value = "通过条件查询规格参数")
+    @GetMapping(value = "specparam/list")
+    Result<List<SpecParamEntity>> getSpecParam(SpecParamDTO specParamDTO);
 }
