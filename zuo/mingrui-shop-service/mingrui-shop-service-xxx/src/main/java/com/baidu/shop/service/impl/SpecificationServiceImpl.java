@@ -84,4 +84,27 @@ public class SpecificationServiceImpl extends BaseApiService implements Specific
 
         return this.setResultSuccess(specParamEntities);
     }
+
+    @Override
+    @Transactional
+    public Result<JSONObject> addSpecParam(SpecParamDTO specParamDTO) {
+        specParamMapper.insertSelective(BaiduBeanUtil.copyProperties(specParamDTO,SpecParamEntity.class));
+
+        return this.setResultSuccess();
+    }
+
+    @Override
+    @Transactional
+    public Result<JSONObject> updateSpecParam(SpecParamDTO specParamDTO) {
+        specParamMapper.updateByPrimaryKeySelective(BaiduBeanUtil.copyProperties(specParamDTO,SpecParamEntity.class));
+
+        return this.setResultSuccess();
+    }
+
+    @Override
+    @Transactional
+    public Result<JSONObject> deleteSpecParam(Integer id) {
+        specParamMapper.deleteByPrimaryKey(id);
+        return this.setResultSuccess();
+    }
 }

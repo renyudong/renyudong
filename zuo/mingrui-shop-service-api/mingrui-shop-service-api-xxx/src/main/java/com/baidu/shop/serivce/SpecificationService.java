@@ -36,4 +36,16 @@ public interface SpecificationService {
     @ApiOperation(value = "通过条件查询规格参数")
     @GetMapping(value = "specparam/list")
     Result<List<SpecParamEntity>> getSpecParam(SpecParamDTO specParamDTO);
+
+    @ApiOperation(value = "新增")
+    @PostMapping(value = "specparam/add")
+    Result<JSONObject> addSpecParam(@Validated(MingruiOperation.Add.class) @RequestBody SpecParamDTO specParamDTO);
+
+    @ApiOperation(value = "修改")
+    @PutMapping(value = "specparam/add")
+    Result<JSONObject> updateSpecParam(@Validated(MingruiOperation.Update.class) @RequestBody SpecParamDTO specParamDTO);
+
+    @ApiOperation(value = "删除")
+    @DeleteMapping(value = "specparam/delete")
+    Result<JSONObject> deleteSpecParam(Integer id);
 }
