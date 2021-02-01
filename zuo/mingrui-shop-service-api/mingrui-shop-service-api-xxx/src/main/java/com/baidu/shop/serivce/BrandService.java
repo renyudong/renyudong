@@ -38,4 +38,9 @@ public interface BrandService {
     @ApiOperation(value = "修改")
     Result<JSONObject> deleteBrandInfo(Integer id);
 
+    //通过id查询品牌
+    @GetMapping(value = "brand/getBrandByCategory")
+    @ApiOperation(value = "通过分类id获取品牌")
+    Result<List<BrandEntity>> getBrandByCategory(Integer cid);
 }
+

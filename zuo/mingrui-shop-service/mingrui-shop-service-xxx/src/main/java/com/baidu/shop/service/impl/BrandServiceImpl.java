@@ -164,4 +164,10 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
         categoryBrandMapper.deleteByExample(example);//删除商品分类
         return this.setResultSuccess();
     }
+
+    @Override
+    public Result<List<BrandEntity>> getBrandByCategory(Integer cid) {
+        List<BrandEntity> list = brandMapper.getBrandByCategory(cid);
+        return this.setResultSuccess(list);
+    }
 }
