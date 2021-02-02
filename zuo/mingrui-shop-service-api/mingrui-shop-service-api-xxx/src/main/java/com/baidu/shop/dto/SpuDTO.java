@@ -9,14 +9,8 @@ import lombok.Data;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.List;
 
-/**
- * @ClassName SpuDTO
- * @Description: TODO
- * @Author shenyaqi
- * @Date 2021/1/5
- * @Version V1.0
- **/
 @ApiModel(value = "spu数据传输DTO")
 @Data
 public class SpuDTO extends BaseDTO {
@@ -30,6 +24,7 @@ public class SpuDTO extends BaseDTO {
     private String title;
 
     @ApiModelProperty(value = "子标题")
+    @NotEmpty(message = "子标题不能为空", groups = {MingruiOperation.Add.class})
     private String subTitle;
 
     @ApiModelProperty(value = "1级类目id", example = "1")
@@ -63,4 +58,14 @@ public class SpuDTO extends BaseDTO {
     //不需要验证,新增时直接设置默认值,修改时使用java代码赋值
     @ApiModelProperty(value = "最后修改时间")
     private Date lastUpdateTime;
+
+    private String categoryName;
+
+    private String brandName;
+
+    @ApiModelProperty(value = "大字段数据")
+    private SpuDetailDTO spuDetail;
+
+    @ApiModelProperty(value = "sku属性数据集合")
+    private List<SkuDTO> skus;
 }
