@@ -1,0 +1,1560 @@
+商品：分类管理 --> 查询：
+	在mingrui-shop--commons项目下新建mingrui-shop-common-core项目
+	 
+	pom.xml 文件：
+		<dependencies>
+			<!--处理json与各种数据类型或文档类型的转换-->
+			<dependency>
+				<groupId>com.google.code.gson</groupId>
+				<artifactId>gson</artifactId>
+				<version>2.8.5</version>
+			</dependency>
+			<!--json对象序列化和反序列化的支持-->
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-core-lgpl</artifactId>
+				<version>1.9.13</version>
+			</dependency>
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-mapper-lgpl</artifactId>
+				<version>1.9.13</version>
+			</dependency>
+			<!--java对象和json对象之间的转换-->
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-core-asl</artifactId>
+				<version>1.9.13</version>
+			</dependency>
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-mapper-asl</artifactId>
+				<version>1.9.13</version>
+			</dependency>
+			<!--alibaba的json处理工具-->
+			<dependency>
+				<groupId>com.alibaba</groupId>
+				<artifactId>fastjson</artifactId>
+				<version>1.2.62</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>2.11.2</version>
+			</dependency>
+		</dependencies>
+	
+	新建包com.baidu.shop.utils
+	JSONUtil 类：
+		import com.alibaba.fastjson.JSONObject;
+		import org.codehaus.jackson.JsonParseException;
+		import org.codehaus.jackson.map.JsonMappingException;
+		import org.codehaus.jackson.map.ObjectMapper;
+		import org.codehaus.jackson.type.TypeReference;
+		import com.google.gson.Gson;
+		import com.google.gson.GsonBuilder;
+		import com.google.gson.JsonArray;
+		import com.google.gson.JsonElement;
+		import com.google.gson.JsonObject;
+		import com.google.gson.JsonParser;
+		import com.google.gson.reflect.TypeToken;
+
+		import java.io.FileOutputStream;
+		import java.io.IOException;
+		import java.util.ArrayList;
+		import java.util.HashMap;
+		import java.util.List;
+		import java.util.Map;
+		/**
+		 * @ClassName JSONUtil
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		public class JSONUtil {
+
+			private static Gson gson = null;
+
+			static {
+				gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();// todo yyyy-MM-dd HH:mm:ss
+			}
+
+			public static synchronized Gson newInstance() {
+				if (gson == null) {
+					gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				}
+				return gson;
+			}
+
+			public static String toJsonString(Object obj) {
+				return gson.toJson(obj);
+			}
+
+			public static <T> T toBean(String json, Class<T> clz) {
+
+				return gson.fromJson(json, clz);
+			}
+
+			public static <T> Map<String, T> toMap(String json, Class<T> clz) {
+				Map<String, JsonObject> map = gson.fromJson(json, new TypeToken<Map<String, JsonObject>>() {
+				}.getType());
+				Map<String, T> result = new HashMap<String, T>();
+				for (String key : map.keySet()) {
+					result.put(key, gson.fromJson(map.get(key), clz));
+				}
+				return result;
+			}
+
+			public static Map<String, Object> toMap(String json) {
+				Map<String, Object> map = gson.fromJson(json, new TypeToken<Map<String, Object>>() {
+				}.getType());
+				return map;
+			}
+
+			public static <T> List<T> toList(String json, Class<T> clz) {
+				JsonArray array = new JsonParser().parse(json).getAsJsonArray();
+				List<T> list = new ArrayList<T>();
+				for (final JsonElement elem : array) {
+					list.add(gson.fromJson(elem, clz));
+				}
+				return list;
+			}
+
+			/**
+			 * 从json字符串中获取需要的值
+			 *
+			 * @param json
+			 * @param clazz 要转换的类型
+			 * @return
+			 */
+			public static <T> Object getObjectByKey(String json, Class<T> clazz) {
+				if (json != null && !"".equals(json)) {
+					return JSONObject.parseObject(json, clazz);
+				}
+				return null;
+			}
+
+			/**
+			 * 从json字符串中获取需要的值
+			 *
+			 * @param json
+			 * @param clazz 要转换的类型
+			 * @return
+			 */
+			public static <T> List<T> getListByKey(String json, Class<T> clazz) {
+				if (json != null && !"".equals(json)) {
+					return JSONObject.parseArray(json, clazz);
+				}
+				return null;
+			}
+
+			/**
+			 * 从json字符串中获取需要的值
+			 *
+			 * @param json
+			 * @param key
+			 *            键
+			 * @return
+			 */
+			public static String getStrByKey(String json, String key) {
+				String str = "";
+				if (json != null && !"".equals(json)) {
+					JSONObject j = JSONObject.parseObject(json);
+					if (j.get(key) != null) {
+						str = j.get(key).toString();
+					}
+				}
+				return str;
+			}
+
+			/**
+			 * 向文件中写数据
+			 *
+			 * @param _sDestFile
+			 * @param _sContent
+			 * @throws IOException
+			 */
+			public static void writeByFileOutputStream(String _sDestFile, String _sContent) throws IOException {
+				FileOutputStream fos = null;
+				try {
+					fos = new FileOutputStream(_sDestFile);
+					fos.write(_sContent.getBytes());
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				} finally {
+					if (fos != null) {
+						fos.close();
+						fos = null;
+					}
+
+				}
+			}
+
+			/**
+			 * 非空
+			 *
+			 * @param str
+			 * @return true:不为空 false：空
+			 */
+			public static boolean noEmpty(String str) {
+				boolean flag = true;
+				if ("".equals(str)) {
+					flag = false;
+				}
+				return flag;
+			}
+
+			/**
+			 * 将"%"去掉
+			 *
+			 * @param str
+			 * @return
+			 */
+			public static double getDecimalByPercentage(String str) {
+				double fuse = 0.0;
+				if (!"".equals(str) && str != null) {
+					if (str.split("%").length > 0) {
+						fuse = Double.parseDouble(str.split("%")[0]);
+						return fuse;
+					}
+				}
+				return 0.0;
+			}
+
+			/**
+			 * 保留2位小数
+			 *
+			 * @param number
+			 * @return
+			 */
+			public static double ConversionFraction(double number) {
+				return Math.floor(number * 100 + 0.5) / 100;
+			}
+
+			public static float ConversionM(double number) {
+				return (float) JSONUtil.ConversionFraction(number / 1024 / 1024);
+			}
+
+			public static String getErrorText(String s) {
+				JSONObject j = JSONObject.parseObject(s);
+				return j.getJSONObject(j.keySet().iterator().next()).get("errortext").toString();
+			}
+
+			public static String getSingleJobId(String s) throws Exception {
+				JSONObject j = JSONObject.parseObject(s);
+				try {
+					return j.getJSONObject(j.keySet().iterator().next()).get("jobid").toString();
+				} catch (Exception e) {
+					try {
+						return j.getJSONObject(j.keySet().iterator().next()).get("errortext").toString();
+					} catch (Exception e1) {
+						throw new Exception(e1.getMessage());
+
+					}
+
+				}
+			}
+
+			public static <T> T readValue(String jsonStr, TypeReference type)
+					throws JsonParseException, JsonMappingException, IOException {
+				ObjectMapper mapper = new ObjectMapper();
+				return mapper.readValue(jsonStr, type);
+			}
+
+			public static JSON_TYPE getJSONType(String str) {
+				if (null == str || "".equals(str)) {
+					return JSON_TYPE.JSON_TYPE_ERROR;
+				}
+
+				final char[] strChar = str.substring(0, 1).toCharArray();
+				final char firstChar = strChar[0];
+
+				if (firstChar == '{') {
+					return JSON_TYPE.JSON_TYPE_OBJECT;
+				} else if (firstChar == '[') {
+					return JSON_TYPE.JSON_TYPE_ARRAY;
+				} else {
+					return JSON_TYPE.JSON_TYPE_ERROR;
+				}
+			}
+
+			public enum JSON_TYPE {
+				/** JSONObject */
+				JSON_TYPE_OBJECT,
+				/** JSONArray */
+				JSON_TYPE_ARRAY,
+				/** 不是JSON格式的字符串 */
+				JSON_TYPE_ERROR
+			}
+		}
+	
+	新建包com.baidu.shop.status
+	HTTPStatus 类：
+		public class HTTPStatus {
+
+		public static final int OK = 200;//成功
+
+		public static final int ERROR = 500;//失败
+
+		}
+	
+	新建包com.baidu.shop.base
+	Result泛型 :
+	
+		import lombok.Data;
+		import lombok.NoArgsConstructor;
+
+		import java.util.HashMap;
+
+		/**
+		 * @ClassName Result
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		@Data // 生成set 和get函数
+		@NoArgsConstructor //生成无参构造函数
+		public class Result<T> {
+
+			private Integer code;//返回码
+
+			private String message;//返回消息
+
+			private T data;//返回数据
+
+			public Result(Integer code, String message, Object data) {
+				this.code = code;
+				this.message = message;
+				this.data = (T) data;
+			}
+		}
+		
+	BaseApiService 回调信息：
+	
+		import com.baidu.shop.status.HTTPStatus;
+		import com.baidu.shop.utils.JSONUtil;
+		import lombok.Data;
+		import lombok.extern.slf4j.Slf4j;
+		import org.springframework.stereotype.Component;
+
+		/**
+		 * @ClassName BaseApiService
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		@Data
+		@Component
+		@Slf4j
+		public class BaseApiService<T> {
+
+			public Result<T> setResultError(Integer code, String msg) {
+
+				return setResult(code, msg, null);
+			}
+
+			// 返回错误，可以传msg
+			public Result<T> setResultError(String msg) {
+
+				return setResult(HTTPStatus.ERROR, msg, null);
+			}
+
+			// 返回成功，可以传data值
+			public Result<T> setResultSuccess(T data) {
+				return setResult(HTTPStatus.OK, HTTPStatus.OK + "", data);
+			}
+
+			// 返回成功，沒有data值
+			public Result<T> setResultSuccess() {
+				return setResult(HTTPStatus.OK, HTTPStatus.OK + "", null);
+			}
+
+			// 返回成功，沒有data值
+			public Result<T> setResultSuccess(String msg) {
+				return setResult(HTTPStatus.OK, msg, null);
+			}
+
+			// 通用封装
+			public Result<T> setResult(Integer code, String msg, T data) {
+				log.info(String.format("{code : %s , message : %s , data : %s}",code,msg, JSONUtil.toJsonString(data)));
+				return new Result<T>(code, msg, data);
+			}
+		}
+		
+	
+	service-api工程 
+	 mingrui-shop-service-api/pom.xml
+		<dependencies>
+
+			<!-- SpringBoot-整合Web组件 -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+
+			<!--Entity 中的@Table 和@Id需要此注解-->
+			<dependency>
+				<groupId>javax.persistence</groupId>
+				<artifactId>persistence-api</artifactId>
+				<version>1.0.2</version>
+			</dependency>
+
+			<!--2.3版本之后web删除了验证插件-->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-validation</artifactId>
+			</dependency>
+
+			<!--引入common工程代码 把微服务的这个概念做到极致   让模块(服务) 复用-->
+			<dependency>
+				<groupId>com.baidu</groupId>
+				<artifactId>mingrui-shop-common-core</artifactId>
+				<version>1.0-SNAPSHOT</version>
+			</dependency>
+
+		</dependencies>
+		
+	 在mingrui-shop-service-api项目下新建mingrui-shop-service-api-xxx项目
+	 pom.xml文件
+	 
+		<dependencies>
+			<!--帮助开发人员快速生成API文档-->
+			<dependency>
+				<groupId>io.springfox</groupId>
+				<artifactId>springfox-swagger2</artifactId>
+				<version>2.9.2</version>
+			</dependency>
+			<!--提供可视化的API文档-->
+			<dependency>
+				<groupId>io.springfox</groupId>
+				<artifactId>springfox-swagger-ui</artifactId>
+				<version>2.9.2</version>
+			</dependency>
+		</dependencies>
+
+	新建包com.baidu.shop.entity
+	CategoryEntity 实体类
+	
+		import io.swagger.annotations.ApiModel;
+		import io.swagger.annotations.ApiModelProperty;
+		import lombok.Data;
+
+		import javax.persistence.Id;
+		import javax.persistence.Table;
+
+		/**
+		 * @ClassName CategoryEntity
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		@ApiModel(value = "分类实体类")//swagger的注解 : 声明模型
+		@Data
+		@Table(name = "tb_category") //java 的实体类和数据库中的表做映射
+		public class CategoryEntity {
+
+			@Id //声明主键
+			@ApiModelProperty(value = "类目id",example = "1") //所有的数字类型在写swagger的时候需要加example="默认值",测试接口
+			private Integer id;//如果没有@Column 默认使用entity的属性名和 数据库表的字段名做映射
+
+			@ApiModelProperty(value = "类目名称")
+			private String name;
+
+			@ApiModelProperty(value = "父类目id,顶级类目填0",example = "1")
+			private Integer parentId;//会自动将驼峰转换为 _x的形式
+
+			@ApiModelProperty(value = "是否是父级节点",example = "1")
+			private Integer isParent;
+
+			@ApiModelProperty(value = "排序",example = "1")
+			private Integer sort;
+		}
+
+	新建包com.baidu.shop.config.MrSwagger2Config
+	
+		import org.springframework.context.annotation.Bean;
+		import org.springframework.context.annotation.Configuration;
+		import springfox.documentation.builders.ApiInfoBuilder;
+		import springfox.documentation.builders.PathSelectors;
+		import springfox.documentation.builders.RequestHandlerSelectors;
+		import springfox.documentation.service.ApiInfo;
+		import springfox.documentation.service.Contact;
+		import springfox.documentation.spi.DocumentationType;
+		import springfox.documentation.spring.web.plugins.Docket;
+		import springfox.documentation.swagger2.annotations.EnableSwagger2;
+		/**
+		 * @ClassName MrSwagger2Config
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		@Configuration
+		@EnableSwagger2
+		public class MrSwagger2Config {
+
+
+			@Bean
+			public Docket createRestApi(){
+				return new Docket(DocumentationType.SWAGGER_2)
+						.apiInfo(this.apiInfo())
+						.select()
+						.apis(RequestHandlerSelectors.basePackage("com.baidu"))
+						.paths(PathSelectors.any())
+						.build();
+			}
+
+			private ApiInfo apiInfo(){
+				return new ApiInfoBuilder()
+						//标题
+						.title("明瑞SWAGGER2标题")
+						//条款地址
+						.termsOfServiceUrl("http://www.baidu.com")
+						//联系方式-->有String参数的方法但是已经过时，所以不推荐使用
+						.contact(new Contact("shenyaqi","baidu.com","shenyaqiii@163.com"))
+						//版本
+						.version("v1.0")
+						//项目描述
+						.description("描述")
+						//创建API基本信息
+						.build();
+			}
+		}
+
+	定义商品分类接口
+		import com.baidu.shop.base.Result;
+		import com.baidu.shop.entity.CategoryEntity;
+		import com.google.gson.JsonObject;
+		import io.swagger.annotations.Api;
+		import io.swagger.annotations.ApiOperation;
+		import org.springframework.web.bind.annotation.DeleteMapping;
+		import org.springframework.web.bind.annotation.GetMapping;
+
+		import java.util.List;
+
+		/**
+		 * @ClassName CategoryService
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		@Api(tags = "商品分类接口") // 声明接口
+		public interface CategoryService {
+
+			@ApiOperation(value = "通过pid查询商品分类")
+			@GetMapping(value = "category/list")
+			Result<List<CategoryEntity>> getCategoryByPid(Integer pid);
+
+		}
+		
+	service工程
+	mingrui-shop-service/pom.xml
+	
+		<dependencies>
+
+			<!-- SpringBoot-整合Web组件 -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+
+			<!-- springcloud feign组件 -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-starter-openfeign</artifactId>
+			</dependency>
+
+			<!--mysql数据库连接-->
+			<dependency>
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+				<scope>runtime</scope><!--项目运行阶段使用-->
+			</dependency>
+			<!--通用mapper-->
+			<dependency>
+				<groupId>tk.mybatis</groupId>
+				<artifactId>mapper-spring-boot-starter</artifactId>
+				<version>2.1.5</version>
+			</dependency>
+
+			<!--分页工具
+			自定义的 mybatis 插件
+			mybatis运行原理 mybatis的执行器-->
+			<dependency>
+				<groupId>com.github.pagehelper</groupId>
+				<artifactId>pagehelper-spring-boot-starter</artifactId>
+				<version>1.2.10</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.baidu</groupId>
+				<artifactId>mingrui-shop-service-api-xxx</artifactId>
+				<version>1.0-SNAPSHOT</version>
+			</dependency>
+
+		</dependencies>
+		
+	 在mingrui-shop-service工程下新建mingrui-shop-service-xxx工程
+	 application.yml ：
+	 
+		server:
+		  port: 8100
+
+		spring:
+		  application:
+			name: xxx-server
+		  # 配置数据源
+		  datasource:
+			# 数据源名称，任意
+			name: mysql
+			url: jdbc:mysql://localhost:3306/2005?useSSL=true&nullNamePatternMatchesAll=true&serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf8
+			# 数据库连接用户
+			username: root
+			# 数据库连接密码
+			password: root
+			# 驱动名称
+			driver-class-name: com.mysql.cj.jdbc.Driver
+			# boot2.0+使用hikari作为默认数据库连接池
+			type: com.zaxxer.hikari.HikariDataSource
+			hikari:
+			  # 是否自动提交事务 默认
+			  auto-commit: true
+			  # 允许的最小连接数
+			  minimum-idle: 5
+			  # 连接池内最大连接数
+			  maximum-pool-size: 10
+			  # 验证连接的sql语句
+			  connection-test-query: SELECT 1 FROM DUAL
+			  # 连接超时时间 默认30000 毫秒 如果小于250毫秒，则被重置回30秒
+			  connection-timeout: 30000
+			  # 验证超时时间默认5000毫秒 如果小于250毫秒，则会被重置回5秒
+			  validation-timeout: 5000
+			  # 设置连接在连接池中的存活时间 如果不等于0且小于30秒则会被重置回30分钟
+			  max-lifetime: 1800000
+		# 通用mapper
+		mapper:
+		  mappers: tk.mybatis.mapper.common.Mapper
+		  identity: MYSQL
+		#日志设置
+		logging:
+		  level:
+			# 打印与我们程序相关的日志信息
+			com.baidu.shop: debug
+		# eureka配置
+		eureka:
+		  client:
+			service-url:
+			  defaultZone: http://localhost:8761/eureka/
+			  
+	 新建包com.baidu
+	 新建启动类 ：
+	 
+		import org.springframework.boot.SpringApplication;
+		import org.springframework.boot.autoconfigure.SpringBootApplication;
+		import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+		import tk.mybatis.spring.annotation.MapperScan;
+
+		/**
+		 * @ClassName RunXXXApplication
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		@SpringBootApplication
+		@EnableEurekaClient
+		@MapperScan("com.baidu.shop.mapper")
+		public class RunXXXApplication {
+
+			public static void main(String[] args) {
+				SpringApplication.run(RunXXXApplication.class);
+			}
+		}
+		
+	 在com.baidu下新建包shop.mapper
+	 
+	 创建mapper接口 ：
+
+		import com.baidu.shop.entity.CategoryEntity;
+		import tk.mybatis.mapper.common.Mapper;
+
+		/**
+		 * @ClassName CategoryMapper
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		public interface CategoryMapper extends Mapper<CategoryEntity> {
+		}
+
+	 在com.baidu下新建包shop.service.impl
+	 新建实现类 ： 
+
+		import com.baidu.shop.base.BaseApiService;
+		import com.baidu.shop.base.Result;
+		import com.baidu.shop.entity.CategoryEntity;
+		import com.baidu.shop.mapper.CategoryMapper;
+		import com.baidu.shop.service.CategoryService;
+		import com.baidu.shop.utils.ObjectUtil;
+		import com.google.gson.JsonObject;
+		import org.springframework.beans.factory.annotation.Autowired;
+		import org.springframework.transaction.annotation.Transactional;
+		import org.springframework.web.bind.annotation.RestController;
+		import tk.mybatis.mapper.entity.Example;
+		import java.util.List;
+
+
+		/**
+		 * @ClassName CategoryServiceImpl
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/22
+		 * @Version V1.0
+		 **/
+		@RestController
+		public class CategoryServiceImpl extends BaseApiService implements CategoryService {
+
+			@Autowired
+			private CategoryMapper categoryMapper;
+
+			@Override
+			public Result<List<CategoryEntity>> getCategoryByPid(Integer pid) {
+
+				CategoryEntity categoryEntity = new CategoryEntity();
+				categoryEntity.setParentId(pid);
+
+				List<CategoryEntity> list = categoryMapper.select(categoryEntity);
+				return this.setResultSuccess(list);
+			}
+
+			
+		}
+
+	 网关服务
+	 在mingrui-shop-basic项目下新建mingrui-shop-basic-zuul-server
+	 pom.xml ：
+	 
+		<dependencies>
+
+			<!-- zuul -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+			</dependency>
+
+    </dependencies>
+
+	 application.yml ：
+	 
+		server:
+		  port: 8088
+
+		spring:
+		  application:
+			name: eureka-zuul
+
+		zuul:
+		  # 声明路由
+		  routes:
+			# 路由名称
+			api-xxx:
+			  # 声明将所有以/api-ribbon/的请求都转发到eureka-ribbon的服务中
+			  path: /api-xxx/**
+			  serviceId: xxx-server
+		  # 启用重试
+		  retryable: true
+		#配置负载
+		ribbon:
+		  ConnectTimeout: 250 # 连接超时时间(ms)
+		  ReadTimeout: 2000 # 通信超时时间(ms)
+		  OkToRetryOnAllOperations: true # 是否对所有操作重试
+		  MaxAutoRetriesNextServer: 2 # 同一服务不同实例的重试次数
+		  MaxAutoRetries: 1 # 同一实例的重试次数
+
+		hystrix:
+		  command:
+			default:
+			  execution:
+				isolation:
+				  thread:
+					timeoutInMilliseconds: 10000 # 熔断超时时长：6000ms
+
+		eureka:
+		  client:
+			service-url:
+			  defaultZone: http://localhost:8761/eureka/
+			
+	 新建包com.baidu
+	 新建启动类 
+		import org.springframework.boot.SpringApplication;
+		import org.springframework.boot.autoconfigure.SpringBootApplication;
+		import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+		import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
+
+		/**
+		 * @ClassName RunZuulServerApplication
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/23
+		 * @Version V1.0
+		 **/
+		@SpringBootApplication
+		@EnableZuulProxy
+		@EnableEurekaClient
+		public class RunZuulServerApplication {
+
+			public static void main(String[] args) {
+				SpringApplication.run(RunZuulServerApplication.class);
+			}
+		}
+		
+	在com.baidu下新建global.GlobalCorsConfig
+		import org.springframework.context.annotation.Bean;
+		import org.springframework.context.annotation.Configuration;
+		import org.springframework.web.cors.CorsConfiguration;
+		import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+		import org.springframework.web.filter.CorsFilter;
+
+		/**
+		 * @ClassName GlobalCorsConfig
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/23
+		 * @Version V1.0
+		 **/
+		@Configuration
+		public class GlobalCorsConfig {
+
+			@Bean
+			public CorsFilter corsFilter() {
+				final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+				final CorsConfiguration config = new CorsConfiguration();
+				config.setAllowCredentials(true); // 允许cookies跨域
+				config.addAllowedOrigin("*");// 允许向该服务器提交请求的URI，*表示全部允许。。这里尽量限制来源域，比如http://xxxx:8080 ,以降低安全风险。。
+				config.addAllowedHeader("*");// 允许访问的头信息,*表示全部
+				config.setMaxAge(18000L);// 预检请求的缓存时间（秒），即在这个时间段里，对于相同的跨域请求不会再预检了
+				config.addAllowedMethod("*");// 允许提交请求的方法，*表示全部允许，也可以单独设置GET、PUT等
+				config.addAllowedMethod("HEAD");
+				config.addAllowedMethod("GET");// 允许Get的请求方法
+				config.addAllowedMethod("PUT");
+				config.addAllowedMethod("POST");
+				config.addAllowedMethod("DELETE");
+				config.addAllowedMethod("PATCH");
+				source.registerCorsConfiguration("/**", config);
+				//3.返回新的CorsFilter.
+				return new CorsFilter(source);
+			}
+		}
+
+
+删除 ：
+		接口
+			@ApiOperation(value = "通过id删除分类")
+			@DeleteMapping(value = "请求路径")
+			Result<JsonObject> deleteCategoryById(Integer id);
+
+		实现类
+			@Transactional //增删改用的注解
+			@Override
+			public Result<JsonObject> deleteCategoryById(Integer id){
+				//验证id是否合法
+				if(null == id || id <0){
+					return this.setResultError("id不合法");
+				}
+				
+				//通过id查询当前节点信息
+				CategoryEntity categoryEntity = categoryMapper.selectByPrimaryKey(id);
+				
+				//判断当前数据是否存在
+				if(categoryEntity == null){
+					return this.setResultError("数据不存在");
+				}
+				
+				//判断当前节点是否为父节点
+				if(categoryEntity.getIsParent() == 1){
+					return this.setResultError("当前节点为父节点，不能删除");
+				}
+				
+				//根据当前节点信息中的父节点id，查询父节点下有无其他节点
+				Example example = new Example(categoryEntity.class);
+				example.createCriteria().andEqualTo("parentId",categoryEntity.getParentId());
+				List<CategoryEntity> categoryList = categoryMapper.selectByExample(example);
+				
+				//判断父节点下有几个叶子节点
+				if(categoryList.size() <= 1){
+					CategoryEntity updateCategoryEntity = new CategoryEntity();
+					//将父节点的状态改为叶子节点
+					updateCategoryEntity.setIsParent(0);
+					updateCategoryEntity.setId(categoryEntity.getParentId());
+					
+					categoryMapper.updateByPrimaryKeySelective(updateCategoryEntity);
+				}
+				
+				//删除
+				categoryMapper.deleteByPrimaryKey(id);
+				
+				return this.setResultSuccess();
+			}
+			
+		前台----->Category.vue
+			this.$http.delete('请求路径,前后台一致?id=' + id).then(resp =>{
+				if(resp.data.code != 200){
+					this.$message.error('删除失败');
+					return ;
+				}
+				
+				this.$message.success('删除成功');
+				this.delKey = new Date().getTime();//刷新
+			}).catch(resp => console.log(error))
+	
+
+修改 ：
+	接口
+		@ApiDperation(value = "通过id修改")
+		@PutMapping(value = "请求的路径")
+		Result<JsonObject> updateCategoryById(@RequestBody CategoryEntity categoryEntity);
+		
+	实现类
+		@Transactional
+		@Override
+		public Result<JsonObject> updateCategoryById(CategoryEntity categoryEntity){
+				
+				categoryMapper.updateByPrimaryKeySelective(categoryEntity);
+				
+				return this.setResultSuccess();
+		}
+		
+	前台---->Category.vue
+		this.$http.put('前后台路径一致',{
+			id:id,
+			name:name
+		}).then(resp => {
+			if(resp.data.code != 200){
+				this.$message.error('修改失败');
+				return ;
+			}
+			
+			this.$message.success('修改成功');
+			this.delKey = new Date().getTime();//刷新
+		}).catch(resp => console.log(error))
+	
+	
+增加 ：
+		接口
+			@ApiOperation(value = "新增")
+			@PostMapping(value = "/category/add")
+			Result<JsonObject> addCategoryById(@RequestBody CategoryEntity categoryEntity);
+
+		实现类
+			@Transactional
+			@Override
+			public Result<JsonObject> addCategoryById(CategoryEntity categoryEntity) {
+
+				CategoryEntity parentCategoryEntity = new CategoryEntity();
+				parentCategoryEntity.setId(categoryEntity.getParentId());
+				parentCategoryEntity.setIsParent(1);
+				categoryMapper.updateByPrimaryKeySelective(parentCategoryEntity);
+
+				categoryMapper.insertSelective(categoryEntity);
+				return this.setResultSuccess();
+				
+		前台
+			node.isParent = node.isParent?1:0;
+			delete node.id;
+			 //新增
+			this.$http.post('/category/add',node).then(resp =>{     
+
+				if(resp.data.code != 200){
+				 this.$message.error('新增失败');
+				  eturn ;
+				}
+
+				this.$message.success('新增成功');
+				this.delKey = new Date().getTime();
+
+				}).catch(error => console.log(error))
+				
+
+商品品牌查询 ：
+	 common-core
+	  pom.xml：
+		<!--帮助开发人员快速生成API文档--> 
+		<dependency> 
+			<groupId>io.springfox</groupId> 
+			<artifactId>springfox-swagger2</artifactId> 
+			<version>2.9.2</version> 
+		</dependency>
+		
+	在base包下新建BaseDTO
+	
+		import io.swagger.annotations.ApiModel;
+		import io.swagger.annotations.ApiModelProperty;
+		import lombok.Data;
+
+		/**
+		 * @ClassName BaseDTO
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/25
+		 * @Version V1.0
+		 **/
+		@Data
+		@ApiModel(value = "BaseDTO用于数据传输,其他dto需要继承此类")
+		public class BaseDTO {
+
+			@ApiModelProperty(value = "当前页", example = "1")
+			private Integer page;
+
+			@ApiModelProperty(value = "每页显示多少条",example = "5")
+			private Integer rows;
+
+			@ApiModelProperty(value = "排序字段")
+			private String sort;
+
+			@ApiModelProperty(value = "是否升序")
+			private String order;
+		}
+		
+	mingrui-shop-api
+	pom.xml ： 
+		<!--分页工具--> 
+		<dependency> 
+			<groupId>com.github.pagehelper</groupId> 
+			<artifactId>pagehelper-spring-boot-starter</artifactId> 
+			<version>1.2.10</version> 
+		</dependency>
+		
+	mingrui-shop-api-xxx
+	在com.baidu.shop下新建dto包
+	BrandDTO ：
+		import com.baidu.shop.base.BaseDTO;
+		import com.baidu.shop.validate.group.MingruiOperation;
+		import io.swagger.annotations.ApiModel;
+		import io.swagger.annotations.ApiModelProperty;
+		import lombok.Data;
+
+		import javax.validation.constraints.NotEmpty;
+		import javax.validation.constraints.NotNull;
+		/**
+		 * @ClassName BrandDTO
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/25
+		 * @Version V1.0
+		 **/
+		@Data
+		@ApiModel(value = "品牌DTO")
+		public class BrandDTO extends BaseDTO {
+
+			@ApiModelProperty(value = "品牌主键", example = "1")
+			@NotNull(message = "主键不能为空", groups = {MingruiOperation.Update.class})
+			private Integer id;
+
+			@ApiModelProperty(value = "品牌名称")
+			@NotEmpty(message = "名牌名称不能为空", groups = {MingruiOperation.Add.class, MingruiOperation.Update.class})
+			private String name;
+
+			@ApiModelProperty(value = "品牌图片")
+			private String image;
+
+			@ApiModelProperty(value = "品牌首字母")
+			private Character letter;
+		}
+	
+	 entity包下新建BrandEntity ： 
+	 
+		import lombok.Data;
+		import javax.persistence.Id;
+		import javax.persistence.Table;
+
+		/**
+		 * @ClassName BrandEntity
+		 * @Description: TODO
+		 * @Author shenyaqi
+		 * @Date 2020/12/25
+		 * @Version V1.0
+		 **/
+		@Data
+		@Table(name = "tb_brand")
+		public class BrandEntity {
+
+			@Id
+			private Integer id;
+
+			private String name;
+
+			private String image;
+
+			private Character letter;
+		}
+
+	接口
+		@ApiOperation(value = "查询品牌列表")
+		@GetMapping(value = "请求路径")
+		Result<PageInfo<实体类名称>> getBrandInfo(参数校验的类:BrandDTO brandDTO);//参数校验的类还需要继承
+																分页和排序所需的类：BaseDTO
+
+	实现类
+		 //limit 作用? 限制查询
+			//mybatis如何自定义分页插件 --> mybatis执行器
+			PageHelper.startPage(brandDTO.getPage(),brandDTO.getRows());
+
+			//bean copy
+			//BrandEntity brandEntity = new BrandEntity();
+			//BeanUtils.copyProperties(brandDTO,brandEntity);
+			BrandEntity brandEntity = BaiduBeanUtil.copyProperties(brandDTO,BrandEntity.class);
+			
+			//排序
+			if(!StringUtils.isEmpty(brandDTO.getSort())){
+				PageHelper.orderBy(brandDTO.getOrderBy);
+			}
+
+			Example example = new Example(BrandEntity.class);
+			example.createCriteria().andLike("name","%" + brandEntity.getName() + "%");
+
+			List<BrandEntity> brandEntities = brandMapper.selectByExample(example);
+			PageInfo<BrandEntity> pageInfo = new PageInfo<>(brandEntities);
+
+			return this.setResultSuccess(pageInfo);
+
+
+新增：
+	接口
+		@PostMapping(value = "brand/save")
+		@ApiOperation(value = "增加")
+		Result<JSONObject> addBrandInfo(@RequestBody BrandDTO brandDTO);
+		
+	实体类
+		@Transactional
+		@Override
+		public Result<JSONObject> addBrandInfo(BrandDTO brandDTO){
+			
+			 // char c = brandDTO.getName().toCharArray()[0]; 获得第一个字符
+			// String s = String.valueOf(c); 转成String类型的数组
+			// String upperCase = PinyinUtil.getUpperCase(s, false); 获取汉字首字母或全拼大写字母
+			// char c1 = upperCase.toCharArray()[0]; 获得第一个字母
+			// brandEntity.setLetter(c1);
+
+			//新增返回主键?
+			//两种方式实现 select-key insert加两个属性
+			BrandEntity brandEntity = BaiduBeanUtil.copyProperties(brandDTO, BrandEntity.class);
+
+			//品牌首字母
+			brandEntity.setLetter(PinyinUtil.getUpperCase(String.valueOf(brandEntity.getName().toCharArray()[0]), false).toCharArray()[0]);
+
+			brandMapper.insertSelective(brandEntity);
+
+			//维护中间表数据
+			String categories = brandDTO.getCategories();//得到分类集合字符串
+			if(StringUtils.isEmpty(brandDTO.getCategories())) return this.setResultError("");
+			List<CategoryBrandEntity> categoryBrandEntities = new ArrayList<>();
+
+			//判断分类集合字符串中是否包含,
+			if(categories.contains(",")){//多个分类 --> 批量新增
+				String[] categoryArr = categories.split(",");
+
+				for (String s : categoryArr) {
+					CategoryBrandEntity categoryBrandEntity = new CategoryBrandEntity();
+					categoryBrandEntity.setBrandId(brandEntity.getId());
+					categoryBrandEntity.setCategoryId(Integer.valueOf(s));
+					categoryBrandEntities.add(categoryBrandEntity);
+				}
+				//insertListMapper
+				categoryBrandMapper.insertList(categoryBrandEntities);
+			}else{//普通单个新增
+
+				CategoryBrandEntity categoryBrandEntity = new CategoryBrandEntity();
+				categoryBrandEntity.setBrandId(brandEntity.getId());
+				categoryBrandEntity.setCategoryId(Integer.valueOf(categories));
+
+				categoryBrandMapper.insertSelective(categoryBrandEntity);
+			}
+
+			return this.setResultSuccess();
+		}
+
+		
+修改 ：
+	接口
+		@PutMapping(value = "brand/save")
+		@ApiOperation(value = "查询品牌列表")
+		Result<JSONObject> editBrandInfo(@RequestBody BrandDTO brandDTO);
+		
+	实现类
+		 @Override
+		 public Result<JSONObject> editBrandInfo(BrandDTO brandDTO) {
+
+			BrandEntity brandEntity = BaiduBeanUtil.copyProperties(brandDTO, BrandEntity.class);
+			brandEntity.setLetter(PinyinUtil.getUpperCase(String.valueOf(brandEntity.getName().toCharArray()[0]), false).toCharArray()[0]);
+			brandMapper.updateByPrimaryKeySelective(brandEntity);
+
+			//先通过brandId删除中间表的数据
+			Example example = new Example(CategoryBrandEntity.class);
+			example.createCriteria().andEqualTo("brandId",brandEntity.getId());
+			categoryBrandMapper.deleteByExample(example);
+			//批量新增 / 新增
+			String categories = brandDTO.getCategories();//得到分类集合字符串
+			if(StringUtils.isEmpty(brandDTO.getCategories())) return this.setResultError("");
+
+			//判断分类集合字符串中是否包含,
+			if(categories.contains(",")){//多个分类 --> 批量新增
+
+				categoryBrandMapper.insertList(
+						Arrays.asList(categories.split(","))
+								.stream()
+								.map(categoryIdStr -> new CategoryBrandEntity(Integer.valueOf(categoryIdStr)
+										,brandEntity.getId()))
+								.collect(Collectors.toList())
+				);
+
+			}else{//普通单个新增
+
+				CategoryBrandEntity categoryBrandEntity = new CategoryBrandEntity();
+				categoryBrandEntity.setBrandId(brandEntity.getId());
+				categoryBrandEntity.setCategoryId(Integer.valueOf(categories));
+
+				categoryBrandMapper.insertSelective(categoryBrandEntity);
+			}
+			return this.setResultSuccess();
+		}
+		
+规格管理 ：
+	规格组查询：
+		 mingrui-shop-service-api-xxx
+		entity包下新建SpecGroupEntity：
+		
+			import lombok.Data;
+			import javax.persistence.Id;
+			import javax.persistence.Table;
+
+			/**
+			 * @ClassName SpecGroupEntity
+			 * @Description: TODO
+			 * @Author shenyaqi
+			 * @Date 2021/1/4
+			 * @Version V1.0
+			 **/
+			@Table(name = "tb_spec_group")
+			@Data
+			public class SpecGroupEntity {
+
+				@Id
+				private Integer id;
+
+				private Integer cid;
+
+				private String name;
+			}
+		
+		dto包下新建SpecGroupDTO ：
+		
+			import com.baidu.shop.base.BaseDTO;
+			import com.baidu.shop.validate.group.MingruiOperation;
+			import io.swagger.annotations.ApiModel;
+			import io.swagger.annotations.ApiModelProperty;
+			import lombok.Data;
+
+			import javax.validation.constraints.NotEmpty;
+			import javax.validation.constraints.NotNull;
+
+			/**
+			 * @ClassName SpecGroupDTO
+			 * @Description: TODO
+			 * @Author shenyaqi
+			 * @Date 2021/1/4
+			 * @Version V1.0
+			 **/
+			@ApiModel(value = "规格组数据传输DTO")
+			@Data
+			public class SpecGroupDTO extends BaseDTO{
+
+				@ApiModelProperty(value = "主键", example = "1")
+				@NotNull(message = "主键不能为空", groups = {MingruiOperation.Update.class})
+				private Integer id;
+
+				@ApiModelProperty(value = "类型id", example = "1")
+				@NotNull(message = "类型id不能为空", groups = {MingruiOperation.Add.class})
+				private Integer cid;
+
+				@ApiModelProperty(value = "规格组名称")
+				@NotEmpty(message = "规格组名称不能为空", groups = {MingruiOperation.Add.class})
+				private String name;
+			}
+	
+		接口 ：
+			import com.alibaba.fastjson.JSONObject;
+			import com.baidu.shop.base.Result;
+			import com.baidu.shop.dto.SpecGroupDTO;
+			import com.baidu.shop.entity.SpecGroupEntity;
+			import io.swagger.annotations.Api;
+			import io.swagger.annotations.ApiOperation;
+			import org.apache.ibatis.annotations.Delete;
+			import org.springframework.web.bind.annotation.*;
+
+			import java.util.List;
+
+			/**
+			 * @ClassName SpecificationService
+			 * @Description: TODO
+			 * @Author shenyaqi
+			 * @Date 2021/1/4
+			 * @Version V1.0
+			 **/
+			@Api(tags = "规格接口")
+			public interface SpecificationService {
+
+				@ApiOperation(value = "通过条件查询规格组")
+				@GetMapping(value = "specgroup/getSpecGroupInfo")
+				Result<List<SpecGroupEntity>> getSepcGroupInfo(SpecGroupDTO specGroupDTO);
+
+			}
+		
+		实现类 ：
+				import com.alibaba.fastjson.JSONObject;
+				import com.baidu.shop.base.BaseApiService;
+				import com.baidu.shop.base.Result;
+				import com.baidu.shop.dto.SpecGroupDTO;
+				import com.baidu.shop.entity.SpecGroupEntity;
+				import com.baidu.shop.mapper.SpecGroupMapper;
+				import com.baidu.shop.service.SpecificationService;
+				import com.baidu.shop.utils.BaiduBeanUtil;
+				import org.springframework.beans.factory.annotation.Autowired;
+				import org.springframework.web.bind.annotation.RestController;
+				import tk.mybatis.mapper.entity.Example;
+
+				import java.util.List;
+
+				/**
+				 * @ClassName SpecificationServiceImpl
+				 * @Description: TODO
+				 * @Author shenyaqi
+				 * @Date 2021/1/4
+				 * @Version V1.0
+				 **/
+				@RestController
+				public class SpecificationServiceImpl extends BaseApiService implements SpecificationService {
+
+					@Autowired
+					private SpecGroupMapper specGroupMapper;
+
+					@Override
+					public Result<List<SpecGroupEntity>> getSepcGroupInfo(SpecGroupDTO specGroupDTO) {
+
+						Example example = new Example(SpecGroupEntity.class);
+						example.createCriteria().andEqualTo("cid",
+								BaiduBeanUtil.copyProperties(specGroupDTO,SpecGroupEntity.class).getCid());
+
+						List<SpecGroupEntity> specGroupEntities = specGroupMapper.selectByExample(example);
+						return this.setResultSuccess(specGroupEntities);
+					}
+
+				}
+				
+		mapper接口 ：
+			import com.baidu.shop.entity.SpecGroupEntity;
+			import tk.mybatis.mapper.common.Mapper;
+
+			/**
+			 * @ClassName SpecGroupMapper
+			 * @Description: TODO
+			 * @Author shenyaqi
+			 * @Date 2021/1/4
+			 * @Version V1.0
+			 **/
+			public interface SpecGroupMapper extends Mapper<SpecGroupEntity> {
+			}
+
+		
+	规格组的增删改 ：
+		接口：
+			@ApiOperation(value = "新增规格组")
+			@PostMapping(value = "specgroup/save")
+			Result<JSONObject> saveSpecGroup(@RequestBody SpecGroupDTO specGroupDTO);
+
+			@ApiOperation(value = "新增规格组")
+			@PutMapping(value = "specgroup/save")
+			Result<JSONObject> editSpecGroup(@RequestBody SpecGroupDTO specGroupDTO);
+
+			@ApiOperation(value = "新增规格组")
+			@DeleteMapping(value = "specgroup/delete/{id}")
+			Result<JSONObject> deleteSpecGroupById(@PathVariable Integer id);
+			
+		实现类 ：
+			@Override
+			public Result<JSONObject> saveSpecGroup(SpecGroupDTO specGroupDTO) {
+
+				specGroupMapper.insertSelective(BaiduBeanUtil.copyProperties(specGroupDTO,SpecGroupEntity.class));
+
+				return this.setResultSuccess();
+			}
+
+			@Override
+			public Result<JSONObject> editSpecGroup(SpecGroupDTO specGroupDTO) {
+
+				specGroupMapper.updateByPrimaryKeySelective(BaiduBeanUtil.copyProperties(specGroupDTO,SpecGroupEntity.class));
+				return this.setResultSuccess();
+			}
+
+			@Override
+			public Result<JSONObject> deleteSpecGroupById(Integer id) {
+
+				specGroupMapper.deleteByPrimaryKey(id);
+				return this.setResultSuccess();
+			}
+
+	规格参数查询 ：
+		 mingrui-shop-service-api-xxx
+		 entity包下新建SpecParamEntity ：
+
+			import lombok.Data;
+			import javax.persistence.Column;
+			import javax.persistence.Id;
+			import javax.persistence.Table;
+
+			/**
+			 * @ClassName SpecParamEntity
+			 * @Description: TODO
+			 * @Author shenyaqi
+			 * @Date 2021/1/4
+			 * @Version V1.0
+			 **/
+			@Table(name = "tb_spec_param")
+			@Data
+			public class SpecParamEntity {
+
+				@Id
+				private Integer id;
+
+				private Integer cid;
+
+				private Integer groupId;
+
+				private String name;
+
+				@Column(name = "`numeric`")
+				private Boolean numeric;
+
+				private String unit;
+
+				private Boolean generic;
+
+				private Boolean searching;
+
+				private String segments;
+			}
+			
+		dto包下新建SpecParamDTO ： 
+		
+			import com.baidu.shop.base.BaseDTO;
+			import com.baidu.shop.validate.group.MingruiOperation;
+			import io.swagger.annotations.ApiModel;
+			import io.swagger.annotations.ApiModelProperty;
+			import lombok.Data;
+
+			import javax.validation.constraints.NotNull;
+			/**
+			 * @ClassName SpecParamDTO
+			 * @Description: TODO
+			 * @Author shenyaqi
+			 * @Date 2021/1/4
+			 * @Version V1.0
+			 **/
+			@ApiModel(value = "规格参数数据传输DTO")
+			@Data
+			public class SpecParamDTO extends BaseDTO {
+
+				@ApiModelProperty(value = "主键", example = "1")
+				@NotNull(message = "主键不能为空", groups = {MingruiOperation.Update.class})
+				private Integer id;
+
+				@ApiModelProperty(value = "分类id", example = "1")
+				private Integer cid;
+
+				@ApiModelProperty(value = "规格组id", example = "1")
+				private Integer groupId;
+
+				@ApiModelProperty(value = "规格参数名称")
+				private String name;
+
+				@ApiModelProperty(value = "是否是数字类型参数，1->true或0->false", example = "0")
+				@NotNull(message = "是否是数字类型参数不能为空",groups = {MingruiOperation.Add.class,MingruiOperation.Update.class})
+				private Boolean numeric;
+
+				@ApiModelProperty(value = "数字类型参数的单位，非数字类型可以为空")
+				private String unit;
+
+				@ApiModelProperty(value = "是否是sku通用属性，1->true或0->false", example = "0")
+				@NotNull(message = "是否是sku通用属性不能为空",groups = {MingruiOperation.Add.class,MingruiOperation.Update.class})
+				private Boolean generic;
+
+				@ApiModelProperty(value = "是否用于搜索过滤，1->true或0->false", example = "0")
+				@NotNull(message = "是否用于搜索过滤不能为空",groups = {MingruiOperation.Add.class,MingruiOperation.Update.class})
+				private Boolean searching;
+
+				@ApiModelProperty(value = "数值类型参数，如果需要搜索，则添加分段间隔值，如CPU频率间隔：0.5-1.0")
+				private String segments;
+			}
+
+		接口 ：
+			@ApiOperation(value = "通过条件查询规格参数")
+			@GetMapping(value = "specparam/getSpecParamInfo")
+			Result<List<SpecParamEntity>> getSpecParamInfo(SpecParamDTO specParamDTO);
+			
+		实现类 ：
+			@Override
+			public Result<List<SpecParamEntity>> getSpecParamInfo(SpecParamDTO specParamDTO) {
+
+				SpecParamEntity specParamEntity = BaiduBeanUtil.copyProperties(specParamDTO, SpecParamEntity.class);
+				Example example = new Example(SpecParamEntity.class);
+				example.createCriteria().andEqualTo("groupId",specParamEntity.getGroupId());
+
+				List<SpecParamEntity> specParamEntities = specParamMapper.selectByExample(example);
+
+				return this.setResultSuccess(specParamEntities);
+			}
+
+	 规格参数增删改：
+		接口：
+			@ApiOperation(value = "新增规格参数")
+			@PostMapping(value = "specparam/save")
+			Result<JSONObject> saveSpecParam(@RequestBody SpecParamDTO specParamDTO);
+
+			@ApiOperation(value = "修改规格参数")
+			@PutMapping(value = "specparam/save")
+			Result<JSONObject> editSpecParam(@RequestBody SpecParamDTO specParamDTO);
+
+
+			@ApiOperation(value = "删除规格参数")
+			@DeleteMapping(value = "specparam/delete")
+			Result<JSONObject> deleteSpecParam(Integer id);
+
+		实现类 ： 
+			@Override
+			public Result<JSONObject> deleteSpecParam(Integer id) {
+
+				specParamMapper.deleteByPrimaryKey(id);
+				return this.setResultSuccess();
+			}
+
+			@Override
+			public Result<JSONObject> editSpecParam(SpecParamDTO specParamDTO) {
+
+				specParamMapper.updateByPrimaryKeySelective(BaiduBeanUtil.copyProperties(specParamDTO,SpecParamEntity.class));
+				return this.setResultSuccess();
+			}
+
+			@Override
+			public Result<JSONObject> saveSpecParam(SpecParamDTO specParamDTO) {
+
+				specParamMapper.insertSelective(BaiduBeanUtil.copyProperties(specParamDTO,SpecParamEntity.class));
+
+				return this.setResultSuccess();
+			}
+
+	
